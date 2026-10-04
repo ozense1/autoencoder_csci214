@@ -5,7 +5,8 @@ from pathlib import Path
 
 from filelock import FileLock, Timeout
 
-from config import AE_METHODS, ARTIFACT_DIR, DATA_DIR, DEFAULT_MODEL
+from config import AE_METHODS, ARTIFACT_DIR, DATA_DIR, DEFAULT_MODEL, MATRYOSHKA
+from matryoshka import build_matryoshka
 from prepare import prepare
 from training import train_variant
 
@@ -24,7 +25,10 @@ def main():
     parser.add_argument('--alpha', type=float, default=1.)
     parser.add_argument('--beta', type=float, default=.1)
     parser.add_argument('--lambda', dest='lam', type=float, default=.01)
-    parser.add_argument('--seed', type=int, default=7)
+    parser.add_argument('--gamma', type=float, default=1., help='Geometry weight (mse_cosine_geometry only).')
+    parser.add_argument('--seed', type=int, default=7, help='Initialization and minibatch-order seed.')
+    parser.add_argument('--split-seed', type=int, default=None,
+                        help='Seed for the 90/10 document split; default reuses --seed (original behavior).')
     parser.add_argument('--patience', type=int, default=10)
     parser.add_argument('--device', default='cpu')
     parser.add_argument('--threads', type=int, default=4)
@@ -36,17 +40,20 @@ def main():
         parser.error('Epochs, batch size, patience and threads must be positive.')
     if not math.isfinite(args.lr) or args.lr <= 0:
         parser.error('--lr must be finite and positive.')
-    if not all(math.isfinite(v) and v >= 0 for v in (args.alpha, args.beta, args.lam)) or args.alpha == 0:
+    if not all(math.isfinite(v) and v >= 0 for v in (args.alpha, args.beta, args.lam, args.gamma)) or args.alpha == 0:
         parser.error('Weights must be finite and nonnegative; alpha must be positive.')
     args.artifact_dir = args.artifact_dir.resolve()
     args.artifact_dir.mkdir(parents=True, exist_ok=True)
     try:
         with FileLock(str(args.artifact_dir / 'pipeline.lock'), timeout=0):
             baseline = prepare(args.model_path, args.data_dir, args.artifact_dir, args.threads, args.gpu_layers)
+            for method, dimension in MATRYOSHKA.items():
+                if dimension < baseline['dimension']:
+                    build_matryoshka(method, dimension, baseline, args.artifact_dir)
             if args.command == 'train':
                 for variant in AE_METHODS if args.variant == 'all' else [args.variant]:
                     train_variant(variant, baseline, args.artifact_dir,
-                                  **{key: getattr(args, key) for key in ('latent_dim', 'epochs', 'batch_size', 'lr', 'alpha', 'beta', 'lam', 'seed', 'patience', 'device', 'threads')})
+                                  **{key: getattr(args, key) for key in ('latent_dim', 'epochs', 'batch_size', 'lr', 'alpha', 'beta', 'lam', 'gamma', 'seed', 'split_seed', 'patience', 'device', 'threads')})
     except Timeout:
         parser.exit(1, 'Another preparation/training process is active. Wait for it to finish.\n')
 

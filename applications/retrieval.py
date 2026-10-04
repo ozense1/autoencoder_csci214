@@ -9,6 +9,7 @@ import torch
 
 from data_utils import fingerprint, read_json, sha256_file, write_json
 from embeddings import normalize_rows, query_prompt
+from matryoshka import truncate
 from metrics import mean_metrics, query_metrics
 from storage import client
 from training import load_encoder
@@ -54,6 +55,9 @@ class Retriever:
         started = time.perf_counter()
         if method == 'baseline':
             query = vector[None]
+        elif entry.get('transform', {}).get('type') == 'matryoshka':
+            # Same prefix-and-renormalize transform as the indexed documents.
+            query = truncate(vector[None], entry['transform']['dimension'])
         else:
             key = entry['checkpoint_sha256']
             # Verify file content even if a previous encoder is cached in memory.
@@ -73,13 +77,13 @@ class Retriever:
         search_seconds = time.perf_counter() - started
         rows = [
             {'id': doc_id, 'title': metadata.get('title', ''), 'text': document,
-             'cosine': float(np.clip(1 - distance, -1, 1))}
+                'cosine': float(np.clip(1 - distance, -1, 1))}
             for doc_id, metadata, document, distance in zip(raw['ids'][0], raw['metadatas'][0], raw['documents'][0], raw['distances'][0])
         ]
         return rows, {'encoder_seconds': encoder_seconds, 'search_seconds': search_seconds}
 
 
-def evaluate(methods, entries, baseline, artifact_dir, queries, qrels, embedder, progress=None):
+def evaluate(methods, entries, baseline, artifact_dir, queries, qrels, embedder, progress=None, split='test'):
     retriever = Retriever(artifact_dir)
     results = {method: [] for method in methods}
     timings = {method: {'encoder_seconds': 0., 'search_seconds': 0.} for method in methods}
@@ -101,17 +105,22 @@ def evaluate(methods, entries, baseline, artifact_dir, queries, qrels, embedder,
         if progress:
             progress(number, len(qrels))
     evaluation = {
-        'query_count': len(qrels), 'base_fingerprint': baseline['base_fingerprint'],
+        'split': split, 'query_count': len(qrels), 'base_fingerprint': baseline['base_fingerprint'],
         'methods': {method: {'metrics': mean_metrics(results[method]), 'dimension': entries[method]['dimension'],
-                             'index_fingerprint': entries[method]['index_fingerprint'],
-                             'mean_encoder_seconds': timings[method]['encoder_seconds'] / len(qrels),
-                             'mean_search_seconds': timings[method]['search_seconds'] / len(qrels)} for method in methods},
+                                'index_fingerprint': entries[method]['index_fingerprint'],
+                                **{key: entries[method][key] for key in ('config', 'best_epoch', 'latent_stats', 'training_seconds') if key in entries[method]},
+                                'mean_encoder_seconds': timings[method]['encoder_seconds'] / len(qrels),
+                                'mean_search_seconds': timings[method]['search_seconds'] / len(qrels)} for method in methods},
         'query_embedding_or_cache_seconds': query_seconds, 'query_cache_hits': query_cache_hits,
         'truncated_queries': truncated_queries, 'per_query': per_query,
         'judgments_fingerprint': fingerprint(qrels), 'queries_fingerprint': fingerprint(queries),
     }
     key = fingerprint({'base': baseline['base_fingerprint'], 'indexes': {m: entries[m]['index_fingerprint'] for m in methods},
-                       'queries': evaluation['queries_fingerprint'], 'qrels': evaluation['judgments_fingerprint']})
+                        'queries': evaluation['queries_fingerprint'], 'qrels': evaluation['judgments_fingerprint'], 'split': split})
     evaluation['evaluation_fingerprint'] = key
-    write_json(Path(artifact_dir) / 'evaluations' / f'{key}.json', evaluation)
+    # Test reports stay where the app looks for them; development reports are kept
+    # in a separate folder so they can never be mistaken for final results.
+    folder = Path(artifact_dir) / 'evaluations' / ('' if split == 'test' else split)
+    write_json(folder / f'{key}.json', evaluation)
+    evaluation['report_path'] = str(folder / f'{key}.json')
     return evaluation

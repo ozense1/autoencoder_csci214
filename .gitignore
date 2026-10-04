@@ -11,7 +11,7 @@ applications/data/scifact/
 applications/artifacts/
 
 # working copies 
-.main_applications/
+.og_applications/
 applications_original/
 
 # original course materials (not my work)

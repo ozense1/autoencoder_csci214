@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pandas as pd
 import streamlit as st
 
-from config import ARTIFACT_DIR, DATA_DIR, DEFAULT_MODEL, METHODS
+from config import ARTIFACT_DIR, DATA_DIR, DEFAULT_MODEL, FIXED_METHODS, METHODS
 from data_utils import fingerprint, load_dataset, read_json, resolve_resource
 from embeddings import Embedder, embedding_spec
 from metrics import query_metrics
@@ -43,8 +43,8 @@ def retriever(artifact_dir):
 
 def command(method, model_path, data_dir, artifact_dir):
     parts = [sys.executable, str(Path(__file__).with_name('train_autoencoder.py')),
-             'prepare' if method == 'baseline' else 'train']
-    if method != 'baseline':
+                'prepare' if method in FIXED_METHODS else 'train']
+    if method not in FIXED_METHODS:
         parts += ['--variant', method]
     parts += ['--model-path', str(model_path), '--data-dir', str(data_dir), '--artifact-dir', str(artifact_dir)]
     return shlex.join(parts)
@@ -103,8 +103,8 @@ def main():
     st.caption('Compare original embeddings with autoencoders trained using reconstruction, cosine, and contractive loss.')
     try:
         documents, queries, qrels = dataset(str(data_dir), (data_dir / 'corpus.jsonl').stat().st_mtime_ns,
-                                           (data_dir / 'queries.jsonl').stat().st_mtime_ns,
-                                           (data_dir / 'qrels' / 'test.tsv').stat().st_mtime_ns)
+                                            (data_dir / 'queries.jsonl').stat().st_mtime_ns,
+                                            (data_dir / 'qrels' / 'test.tsv').stat().st_mtime_ns)
     except (OSError, ValueError) as exc:
         st.error(f'Cannot load SciFact: {exc}')
         st.info('See applications/README.md for the dataset-copy command.')
@@ -133,7 +133,7 @@ def main():
     try:
         stat = model_path.stat()
         _, actual_fingerprint = current_spec(str(model_path), stat.st_size, stat.st_mtime_ns, str(data_dir),
-                                             (data_dir / 'corpus.jsonl').stat().st_mtime_ns)
+                                                (data_dir / 'corpus.jsonl').stat().st_mtime_ns)
         if actual_fingerprint != baseline['base_fingerprint']:
             raise ValueError('The model, corpus, or embedding runtime changed. Prepare matching indexes before searching.')
     except (OSError, ValueError) as exc:
@@ -169,7 +169,7 @@ def main():
             st.warning(f'{METHODS[method]} is not ready.')
             st.code(command(method, model_path, data_dir, artifact_dir), language='bash')
         signature = fingerprint({'query': query, 'id': query_id, 'methods': selected,
-                                 'indexes': {m: entries[m]['index_fingerprint'] for m in selected if m in entries}})
+                                    'indexes': {m: entries[m]['index_fingerprint'] for m in selected if m in entries}})
         if st.button('Search', type='primary', disabled=bool(missing) or not selected or not query, key='search'):
             try:
                 with st.spinner('Retrieving documents…'):
@@ -194,7 +194,7 @@ def main():
             bar = st.progress(0., text='Preparing queries…')
             try:
                 report = evaluate(selected_eval, entries, baseline, artifact_dir, queries, qrels, engine,
-                                  progress=lambda done, total: bar.progress(done / total, text=f'Evaluated {done}/{total} queries'))
+                                    progress=lambda done, total: bar.progress(done / total, text=f'Evaluated {done}/{total} queries'))
                 st.session_state['evaluation_report'] = report
             except Exception as exc:
                 st.error(f'Evaluation could not complete: {exc}')
@@ -219,19 +219,25 @@ def main():
             st.dataframe(pd.DataFrame(table), hide_index=True, width='stretch')
             st.download_button('Download evaluation JSON', json.dumps(report, indent=2), file_name='scifact_evaluation.json', mime='application/json')
     with training_tab:
-        st.subheader('Train the four autoencoder variants')
+        st.subheader('Train the autoencoder variants')
         st.write('Training runs from the command line and reuses the cached embeddings. The app reads completed checkpoints and indexes.')
         all_command = command('mse', model_path, data_dir, artifact_dir).replace('--variant mse ', '--variant all ')
         st.code(all_command, language='bash')
         st.caption('Defaults: 768 → 128 → 768 · tanh encoder · tied linear decoder · α=1, β=0.1, λ=0.01 where applicable. These are example settings, not tuned recommendations.')
-        st.latex(r'L=\alpha\,\mathrm{MSE}(x,\hat{x})+\beta[1-\cos(x,\hat{x})]+\lambda\|\partial z/\partial x\|_F^2')
-        trained = [key for key in entries if key != 'baseline']
+        st.latex(r'L=\alpha\,\mathrm{MSE}(x,\hat{x})+\beta[1-\cos(x,\hat{x})]+\lambda\|\partial z/\partial x\|_F^2+\gamma\,\tfrac{1}{B(B-1)}\sum_{i\neq j}(S^x_{ij}-S^z_{ij})^2')
+        trained = [key for key in entries if 'checkpoint' in entries[key]]
         if trained:
             method = st.selectbox('Training run', trained, format_func=METHODS.get, key='training_method')
             entry = entries[method]
             history = pd.DataFrame(read_json(artifact_dir / entry['history'])).set_index('epoch')
             st.line_chart(history[['train_total', 'validation_total']], x_label='Epoch', y_label='Weighted objective')
-            st.line_chart(history[['validation_mse', 'validation_cosine', 'validation_contractive']], x_label='Epoch', y_label='Unweighted loss components')
+            components = [c for c in ('validation_mse', 'validation_cosine', 'validation_contractive', 'validation_geometry') if c in history]
+            for component in components:
+                # Separate charts: the terms differ by orders of magnitude.
+                st.line_chart(history[[component]], x_label='Epoch', y_label=component.replace('validation_', 'Validation '))
+            if 'latent_stats' in entry:
+                st.caption('Collapse diagnostics (raw z, all documents)')
+                st.json(entry['latent_stats'])
             st.caption(f"Best epoch {entry['best_epoch']} of {entry['epochs_completed']}; checkpoint selected using unlabeled document validation loss.")
             with st.expander('Checkpoint settings'):
                 st.json(entry['config'])

@@ -61,9 +61,12 @@ def readiness(artifact_dir):
         try:
             if not baseline or entry['base_fingerprint'] != baseline['base_fingerprint']:
                 raise ValueError('Embeddings changed; retrain this variant.')
-            if method != 'baseline' and not (Path(artifact_dir) / entry['checkpoint']).is_file():
+            trained = 'checkpoint' in entry  # baseline and Matryoshka have no checkpoint
+            if method != 'baseline' and not trained and 'transform' not in entry:
+                raise ValueError('Entry has neither a checkpoint nor a fixed transform.')
+            if trained and not (Path(artifact_dir) / entry['checkpoint']).is_file():
                 raise ValueError('Checkpoint missing.')
-            if method != 'baseline' and sha256_file(Path(artifact_dir) / entry['checkpoint']) != entry['checkpoint_sha256']:
+            if trained and sha256_file(Path(artifact_dir) / entry['checkpoint']) != entry['checkpoint_sha256']:
                 raise ValueError('Checkpoint changed; rebuild this index.')
             collection = db.get_collection(entry['collection'], embedding_function=None)
             if collection.count() != entry['document_count']:

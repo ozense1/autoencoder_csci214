@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from config import QREL_SPLITS
 
 
 def sha256_file(path):
@@ -38,7 +39,14 @@ def read_json(path):
     return json.loads(Path(path).read_text())
 
 
-def load_dataset(path):
+def load_dataset(path, split='test'):
+    """Return documents, queries and qrels for one judgment split.
+
+    split='test' (default) reads qrels/test.tsv, the held-out final evaluation set.
+    split='dev' reads qrels/train.tsv, used only for relevance-based model selection.
+    """
+    if split not in QREL_SPLITS:
+        raise ValueError(f'Unknown qrels split {split!r}; choose one of {sorted(QREL_SPLITS)}.')
     path = Path(path)
     def records(filename):
         with (path / filename).open() as handle:
@@ -50,7 +58,7 @@ def load_dataset(path):
     documents = records('corpus.jsonl')
     queries = {str(row['_id']): row['text'] for row in records('queries.jsonl')}
     qrels = {}
-    with (path / 'qrels' / 'test.tsv').open() as handle:
+    with (path / 'qrels' / QREL_SPLITS[split]).open() as handle:
         for row in csv.DictReader(handle, delimiter='\t'):
             qrels.setdefault(row['query-id'], {})[row['corpus-id']] = float(row['score'])
     corpus_ids = {str(d['_id']) for d in documents}

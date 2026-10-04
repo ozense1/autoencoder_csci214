@@ -132,6 +132,49 @@ The penalty applies to **raw z**, before L2 normalization for retrieval. The tra
 
 Because the target document corpus supplies unlabeled training vectors, this is a **transductive document-compression experiment**. The held-out test queries and qrels are not training inputs. Lower loss, smaller vectors, or smaller Jacobians do not imply better retrieval. Test the relevance metrics, and use separate development data for future hyperparameter selection.
 
+## Lab 3 evaluation protocol additions
+
+**Development split.** `qrels/train.tsv` (809 queries) is the retrieval development set; `qrels/test.tsv` (300 queries) is reserved for final evaluation. Relevance labels select hyperparameters on dev but never provide training gradients (label-free representation training with relevance-based model selection).
+
+```bash
+python applications/evaluate.py --split dev            # model selection
+python applications/evaluate.py --split dev --methods baseline matryoshka_128 mse_cosine
+python applications/evaluate.py                        # final test run, after freezing settings
+```
+
+Dev reports are written to `artifacts/evaluations/dev/`; test reports stay in `artifacts/evaluations/`. The split is part of each report's fingerprint. The Streamlit app shows test-split results only. `load_dataset(path, split='test'|'dev')` defaults to `test`.
+
+**Matryoshka baseline.** `matryoshka_128` keeps the first 128 EmbeddingGemma coordinates and L2-normalizes again, with the identical transform for queries and documents. It is untrained, has no checkpoint, and is built automatically by `prepare` (cached on reruns). Add more dimensions in `config.MATRYOSHKA` (and `METHODS`).
+
+**Proposed method: `mse_cosine_geometry`.** Adds a batch similarity-preservation term to MSE + cosine:
+
+```text
+S^x_ij = cos(x_i, x_j),  S^z_ij = cos(z_i, z_j)
+L_geometry = 1/(B(B-1)) Σ_{i≠j} (S^x_ij − S^z_ij)²
+L = α MSE + β [1 − cos(x, x_hat)] + γ L_geometry          (λ = 0)
+```
+
+Cosines use normalized vectors, matching retrieval; rescaling z cannot change the term, and identical codes are penalized. The geometry term is logged for every method as a diagnostic but only trains when γ > 0. γ = 0 reproduces `mse_cosine` exactly (ablation). Each run also records collapse diagnostics (`latent_stats`) and the parameter count.
+
+`--seed` controls initialization and minibatch order; `--split-seed` fixes the 90/10 document split independently (omit it to keep the original behavior and fingerprints).
+
+```bash
+# Development sweep over gamma (one seed):
+python applications/experiment.py --name gamma-sweep --split dev --methods mse_cosine_geometry --gamma 0 0.1 1 10 --seeds 1 --split-seed 7
+# Final comparison after freezing settings (three seeds):
+python applications/experiment.py --name final --split test --methods mse mse_cosine mse_cosine_geometry --gamma <chosen> --seeds 1 2 3 --split-seed 7
+```
+
+Results go to `artifacts/experiments/<split>/<name>.json` and `.csv`, with mean ± std over seeds.
+
+**Report artifacts (no retraining).** After the dev sweep and final test experiment:
+
+```bash
+python applications/analysis.py --final final --sweep gamma-sweep-3seed --gamma 1
+```
+
+Writes `artifacts/analysis/report/`: loss-component curves, train/validation objective, gamma sweep plot, per-coordinate std plot, `summary.md` (collapse diagnostics on raw and normalized z, exact cosine search versus HNSW, paired per-seed and per-query bootstrap comparison, storage and parameters) and `query_examples.md` (dev queries where the method helps and hurts).
+
 ## Metrics and evaluation artifacts
 
 - nDCG@10 uses gain `2^relevance - 1` and logarithmic rank discounts, normalized by the ideal top-ten ranking. SciFact judgments are binary.
