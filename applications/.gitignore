@@ -1,3 +1,6 @@
 __pycache__/
 .pytest_cache/
-artifacts/
+artifacts/*
+!artifacts/experiments/
+!artifacts/analysis/
+!artifacts/current.json

@@ -2,17 +2,32 @@
 .patternrecog_venv/
 .pytest_cache/
 __pycache__/
+.pytest_cache/
+artifacts/*
+!artifacts/experiments/
+!artifacts/analysis/
+!artifacts/current.json
 
 # large files
 *.zip
 *.patch
 applications/models/*.gguf
 applications/data/scifact/
-applications/artifacts/
+# applications/artifacts/
 
 # working copies 
 .og_applications/
 applications_original/
+
+# write up
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+writeup.tex
+writeup.pdf
 
 # original course materials (not my work)
 /README.md

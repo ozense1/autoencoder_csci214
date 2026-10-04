@@ -1,0 +1,257 @@
+{
+  "baseline": {
+    "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+    "index_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+    "collection": "scifact-baseline-7278c6d578bbc796",
+    "dimension": 768,
+    "document_count": 5183,
+    "model_path": "../models/embeddinggemma-300m-Q4_0.gguf",
+    "data_dir": "../data/scifact",
+    "embedding_file": "embeddings\\7278c6d578bbc796\\documents.npy",
+    "spec": {
+      "model_sha256": "edc6015cb15694c27be7d1d33f1bc015db9a358ff51ed524628c027504907ba9",
+      "corpus_sha256": "dec31c8182f3d744c7d2c09423756fd1d17cbef75808db13ba01cc0aab4d1ac6",
+      "llama_cpp_version": "0.3.21",
+      "prompt_version": "embeddinggemma-retrieval-v1",
+      "dimension": 768,
+      "context_tokens": 2048,
+      "normalize": true,
+      "truncation": "first-2048-token-ids-including-special-tokens"
+    },
+    "truncated_documents": 0,
+    "runtime": {
+      "threads": 4,
+      "gpu_layers": 0
+    }
+  },
+  "variants": {
+    "mse": {
+      "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+      "index_fingerprint": "44886a03b7ee71b4a6dcf94f4508e9872cc409159c43a402b18921a2ba2752b3",
+      "training_fingerprint": "2f6718a936eeda0c193a0dcf89a17682c129b1cee82f7539f8167daf3c101ade",
+      "checkpoint_sha256": "484bbab5814215dc5eeeeccb00dd56b1d5d64a7521259d9dec76fc14e411ed76",
+      "checkpoint": "models\\mse-2f6718a936eeda0c\\checkpoint.pt",
+      "history": "models\\mse-2f6718a936eeda0c\\history.json",
+      "collection": "scifact-mse-44886a03b7ee71b4",
+      "dimension": 128,
+      "document_count": 5183,
+      "config": {
+        "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+        "method": "mse",
+        "input_dim": 768,
+        "latent_dim": 128,
+        "architecture": "tied-shallow-tanh-linear-decoder-v1",
+        "weights": {
+          "alpha": 1.0,
+          "beta": 0.0,
+          "lam": 0.0
+        },
+        "epochs": 100,
+        "batch_size": 64,
+        "lr": 0.001,
+        "seed": 3,
+        "patience": 10,
+        "min_delta": 1e-08,
+        "train_fraction": 0.9,
+        "torch_version": "2.12.1+cpu",
+        "device": "cpu",
+        "threads": 4,
+        "split_seed": 7
+      },
+      "best_epoch": 31,
+      "best_validation_loss": 0.0002944922598544508,
+      "epochs_completed": 41,
+      "training_seconds": 18.156159799997113,
+      "latent_stats": {
+        "mean_norm": 0.6832422018051147,
+        "mean_coordinate_std": 0.059564948081970215,
+        "min_coordinate_std": 0.04735532030463219,
+        "coordinates_std_below_1e-3": 0,
+        "saturated_fraction": 0.0,
+        "mean_pairwise_cosine": 0.01905939169228077
+      },
+      "parameter_count": 99200
+    },
+    "mse_cosine": {
+      "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+      "index_fingerprint": "aad5317147c3b5538facd7940fd9007a631095084a7ed16e974a7f8be6144266",
+      "training_fingerprint": "5b7f20c7f5f74f270019fa64eef1a09ba5e10786eadffa7722d8ddcb68f5787d",
+      "checkpoint_sha256": "1f6878ea62f0262d7915e0ff645b89e134d0339c704a04167a68b68758909271",
+      "checkpoint": "models\\mse_cosine-5b7f20c7f5f74f27\\checkpoint.pt",
+      "history": "models\\mse_cosine-5b7f20c7f5f74f27\\history.json",
+      "collection": "scifact-mse-cosine-aad5317147c3b553",
+      "dimension": 128,
+      "document_count": 5183,
+      "config": {
+        "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+        "method": "mse_cosine",
+        "input_dim": 768,
+        "latent_dim": 128,
+        "architecture": "tied-shallow-tanh-linear-decoder-v1",
+        "weights": {
+          "alpha": 1.0,
+          "beta": 0.1,
+          "lam": 0.0
+        },
+        "epochs": 100,
+        "batch_size": 64,
+        "lr": 0.001,
+        "seed": 3,
+        "patience": 10,
+        "min_delta": 1e-08,
+        "train_fraction": 0.9,
+        "torch_version": "2.12.1+cpu",
+        "device": "cpu",
+        "threads": 4,
+        "split_seed": 7
+      },
+      "best_epoch": 20,
+      "best_validation_loss": 0.012427015230059624,
+      "epochs_completed": 30,
+      "training_seconds": 27.884374000001117,
+      "latent_stats": {
+        "mean_norm": 0.7704963684082031,
+        "mean_coordinate_std": 0.061468224972486496,
+        "min_coordinate_std": 0.04859882593154907,
+        "coordinates_std_below_1e-3": 0,
+        "saturated_fraction": 0.0,
+        "mean_pairwise_cosine": 0.18459069728851318
+      },
+      "parameter_count": 99200
+    },
+    "mse_cosine_contractive": {
+      "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+      "index_fingerprint": "79daf832f9c305764e7b56ef13df29ec6543a0525447eb75a34be1d9dd3d2e9c",
+      "training_fingerprint": "aa71a5206f4e7dc4cb4a03b717636ce386784e893459cf7b10dd778ef8dd4c9b",
+      "checkpoint_sha256": "312c0de6d79d5027c6df4f0625ba850dc14b6e32efaf27cc700c5e6669158d0c",
+      "checkpoint": "models/mse_cosine_contractive-aa71a5206f4e7dc4/checkpoint.pt",
+      "history": "models/mse_cosine_contractive-aa71a5206f4e7dc4/history.json",
+      "collection": "scifact-mse-cosine-contractive-79daf832f9c30576",
+      "dimension": 128,
+      "document_count": 5183,
+      "config": {
+        "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+        "method": "mse_cosine_contractive",
+        "input_dim": 768,
+        "latent_dim": 128,
+        "architecture": "tied-shallow-tanh-linear-decoder-v1",
+        "weights": {
+          "alpha": 1.0,
+          "beta": 0.1,
+          "lam": 0.01
+        },
+        "epochs": 100,
+        "batch_size": 64,
+        "lr": 0.001,
+        "seed": 7,
+        "patience": 10,
+        "min_delta": 1e-08,
+        "train_fraction": 0.9,
+        "torch_version": "2.12.0+rocm7.2",
+        "device": "cpu",
+        "threads": 4
+      },
+      "best_epoch": 29,
+      "best_validation_loss": 0.030342083424329758,
+      "epochs_completed": 39,
+      "training_seconds": 7.014158171999952
+    },
+    "mse_contractive": {
+      "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+      "index_fingerprint": "6ac4fff2f480c218e97b32c373fd91a54da1fb032b861cd03c44b7a3a238b610",
+      "training_fingerprint": "d66a8e4cb81493c9e4f7660dad795d9ca0625002ccd5407d6f91e38230e9d8c1",
+      "checkpoint_sha256": "a98276b95c8ec03f3e62f7dc8fcba4232ea66a57d39f69804f15241a7df84748",
+      "checkpoint": "models/mse_contractive-d66a8e4cb81493c9/checkpoint.pt",
+      "history": "models/mse_contractive-d66a8e4cb81493c9/history.json",
+      "collection": "scifact-mse-contractive-6ac4fff2f480c218",
+      "dimension": 128,
+      "document_count": 5183,
+      "config": {
+        "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+        "method": "mse_contractive",
+        "input_dim": 768,
+        "latent_dim": 128,
+        "architecture": "tied-shallow-tanh-linear-decoder-v1",
+        "weights": {
+          "alpha": 1.0,
+          "beta": 0.0,
+          "lam": 0.01
+        },
+        "epochs": 100,
+        "batch_size": 64,
+        "lr": 0.001,
+        "seed": 7,
+        "patience": 10,
+        "min_delta": 1e-08,
+        "train_fraction": 0.9,
+        "torch_version": "2.12.0+rocm7.2",
+        "device": "cpu",
+        "threads": 4
+      },
+      "best_epoch": 13,
+      "best_validation_loss": 0.0008699038298800588,
+      "epochs_completed": 23,
+      "training_seconds": 6.228791502000604
+    },
+    "matryoshka_128": {
+      "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+      "index_fingerprint": "050bca30c5a12a39a50b4a00c1749310c44aede6620e9ffa02ed9084115bad75",
+      "collection": "scifact-matryoshka-128-050bca30c5a12a39",
+      "dimension": 128,
+      "document_count": 5183,
+      "transform": {
+        "type": "matryoshka",
+        "dimension": 128
+      }
+    },
+    "mse_cosine_geometry": {
+      "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+      "index_fingerprint": "b97bfcbd04859079a3722c8f6cc30ecfd2982965592eebf75bc5f655a6a4c9a8",
+      "training_fingerprint": "56ab1e91296d64c8a629902870a9e326058840ca9e6e6a41bd334910b4adb41b",
+      "checkpoint_sha256": "bdb86590d1eb62721488b1f7bea30c64b768af515d7b5f008662bacfe2c8901c",
+      "checkpoint": "models\\mse_cosine_geometry-56ab1e91296d64c8\\checkpoint.pt",
+      "history": "models\\mse_cosine_geometry-56ab1e91296d64c8\\history.json",
+      "collection": "scifact-mse-cosine-geometry-b97bfcbd04859079",
+      "dimension": 128,
+      "document_count": 5183,
+      "config": {
+        "base_fingerprint": "7278c6d578bbc7962a21e40dad3c5ad2729a1fa064114788aaa87e22e7c47ed3",
+        "method": "mse_cosine_geometry",
+        "input_dim": 768,
+        "latent_dim": 128,
+        "architecture": "tied-shallow-tanh-linear-decoder-v1",
+        "weights": {
+          "alpha": 1.0,
+          "beta": 0.1,
+          "lam": 0.0,
+          "gamma": 1.0
+        },
+        "epochs": 100,
+        "batch_size": 64,
+        "lr": 0.001,
+        "seed": 3,
+        "patience": 10,
+        "min_delta": 1e-08,
+        "train_fraction": 0.9,
+        "torch_version": "2.12.1+cpu",
+        "device": "cpu",
+        "threads": 4,
+        "loss_version": "offdiag-cosine-sq-uniform-v1",
+        "split_seed": 7
+      },
+      "best_epoch": 48,
+      "best_validation_loss": 0.013483124785125256,
+      "epochs_completed": 58,
+      "training_seconds": 24.708685100005823,
+      "latent_stats": {
+        "mean_norm": 0.8667728900909424,
+        "mean_coordinate_std": 0.06268713623285294,
+        "min_coordinate_std": 0.05315583571791649,
+        "coordinates_std_below_1e-3": 0,
+        "saturated_fraction": 0.0,
+        "mean_pairwise_cosine": 0.3330256938934326
+      },
+      "parameter_count": 99200
+    }
+  }
+}

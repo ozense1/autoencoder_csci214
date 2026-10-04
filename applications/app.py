@@ -100,7 +100,7 @@ def main():
     model_path = Path(os.getenv('CAE_MODEL_PATH', str(stored_model))).expanduser().resolve()
     data_dir = Path(os.getenv('CAE_DATA_DIR', str(stored_data))).expanduser().resolve()
     st.title('SciFact Retrieval Lab')
-    st.caption('Compare original embeddings with autoencoders trained using reconstruction, cosine, and contractive loss.')
+    st.caption('Compare original embeddings with autoencoders trained using reconstruction, cosine, contractive, and geometry-preserving loss.')
     try:
         documents, queries, qrels = dataset(str(data_dir), (data_dir / 'corpus.jsonl').stat().st_mtime_ns,
                                             (data_dir / 'queries.jsonl').stat().st_mtime_ns,
