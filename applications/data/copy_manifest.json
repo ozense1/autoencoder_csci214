@@ -1,0 +1,18 @@
+{
+  "corpus.jsonl": {
+    "sha256": "dec31c8182f3d744c7d2c09423756fd1d17cbef75808db13ba01cc0aab4d1ac6",
+    "bytes": 8106566
+  },
+  "qrels/test.tsv": {
+    "sha256": "0864bb985e0ca2367ba217977e72004d549054b2b06666ed9d4825ac7c21284c",
+    "bytes": 5389
+  },
+  "qrels/train.tsv": {
+    "sha256": "a53f2114831916c096b6c37d9e54da68cef4efdcdbd5ed46533601af972acf1d",
+    "bytes": 14502
+  },
+  "queries.jsonl": {
+    "sha256": "8ff84a7c903f722981cd8d595c022660140c51867b27608a6d4910db86080313",
+    "bytes": 209731
+  }
+}

@@ -1,0 +1,25 @@
+# environment/caches
+.patternrecog_venv/
+.pytest_cache/
+__pycache__/
+
+# large files
+*.zip
+*.patch
+applications/models/*.gguf
+applications/data/scifact/
+applications/artifacts/
+
+# working copies 
+.main_applications/
+applications_original/
+
+# original course materials (not my work)
+/README.md
+/Lab-3.md
+/Lab-3.pdf
+/*.pptx
+/build_presentation.py
+/assets/
+/examples/
+/validation/
